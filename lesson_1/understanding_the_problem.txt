@@ -1,0 +1,12 @@
+# understanding_the_problem.txt
+
+Input: string
+Output: Array of strings
+
+Explicit requirements:
+  - Array should return all substrings of the string that are palindromes
+  - Palindromes are case sensitive
+Implicit requirements:
+  - Return empty array if no palindromes
+  - Return empty array if input is an empty string
+  
