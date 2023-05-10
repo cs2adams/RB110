@@ -1,0 +1,44 @@
+my_arr = [[18, 7], [3, 12]].each do |arr|
+  arr.each do |num|
+    if num > 5
+      puts num
+    end
+  end
+end
+
+# # OUTPUT
+# 18
+# 7
+# 12
+# => [[18, 7], [3, 12]]
+
+Line    Action            Object            Side-Effect         Return Value              Is Return Value Used?
+###############################################################################################################
+1     Variable            Outer array       None                Outer array               No
+      assignment
+
+1     Method call         Outer array       None                Calling object            Yes, assigned to the
+      (each)                                                    (the outer array)         variable my_arr
+
+1-7   Block execution     Each sub-array    None                The sub-array             No
+
+2     Method call         Each sub-array    None                The calling               Yes, used to
+      (each)                                                    sub-array                 determine return
+                                                                                          value of outer block
+
+2-6   Block execution     Each element      None                nil                       No
+                          of sub-array
+
+3-5   if statement        Boolean           None                nil                       Yes, used to
+                                                                                          determine return
+                                                                                          value of inner block
+
+3     Method call         Each element      None                Boolean                   Used by if statement
+      (>)                 of sub-array                                                    to determine whether
+                                                                                          Line 4 should execute
+
+4     Method call         Each element      Outputs a string    nil                       Yes, determines the
+      (puts)              of sub-array      representation                                return value
+                          that is           of an integer                                 of the if statement
+                          greater than
+                          5

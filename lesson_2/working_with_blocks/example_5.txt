@@ -1,0 +1,30 @@
+[[1, 2], [3, 4]].map do |arr|
+  arr.map do |num|
+    num * 2
+  end
+end
+
+# # OUTPUT
+# => [[2, 4], [6, 8]]
+
+Line    Action            Object            Side-Effect         Return Value              Is Return Value Used?
+###############################################################################################################
+1       Method call       [[1, 2],          None                [[2, 4],                  No
+        (map)             [3, 4]]                               [6, 8]]
+
+1-5     Block execution   Each sub-array    None                New array with the        Yes, used by outer map
+                                                                value of each element     call for transformation
+                                                                from the calling
+                                                                sub-array doubled
+
+2       Method call       Each sub-array    None                New array with the        Yes, used to determine
+        (map)                                                   value of each element     return value of outer
+                                                                from the calling          block
+                                                                sub-array doubled
+
+2-4     Block execution   Each element      None                Double the value of       Yes, used by inner map
+                          of sub-array                          the element               call for transformation
+
+3       Expression        Each element      None                Double the value of       Yes, used to determine
+        (num * 2)         of sub-array                          the element               the return value of the
+                                                                                          inner block

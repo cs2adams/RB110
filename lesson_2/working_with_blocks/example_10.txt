@@ -1,0 +1,80 @@
+[[[1, 2], [3, 4]], [5, 6]].map do |arr|
+  arr.map do |el|
+    if el.to_s.to_i == el   # it's an integer
+      el + 1
+    else                    # it's an array
+      el.map do |n|
+        n + 1
+      end
+    end
+  end
+end
+
+# # OUTPUT
+# => [[[2, 3], [4, 5]], [6, 7]]
+
+
+Line    Action            Object            Side-Effect         Return Value                Is Return Value Used?
+#################################################################################################################
+1       Method call       Outer array               None                  New array with              No
+        (map)             [                                               all numbers in the
+                            [                                             nested array structure
+                              [1,2],                                      incremented by one.
+                              [3,4]                                       Original nested structure
+                            ],                                            is maintained
+                            [5,6]
+                          ]
+
+1-11    Outer block       Each subarray             None                  New array with each         Yes, used by map for
+        execution         of outer array                                  element of subarray         transformation
+                                                                          incremented by one
+                                                      
+2       Method call       Each subarray             None                  New array with each         Yes, determines the
+        (map)             of outer array                                  element of subarray         return value of the
+                                                                          incremented by one          outer block
+
+2-10    Inner block       Each element              None                  New object (integer         Yes, used by map
+        execution         of subarray                                     or array) with each         for transformation
+                                                                          subelement of the
+                                                                          element (if array),
+                                                                          or the element itself
+                                                                          (if integer), incremented
+                                                                          by one
+
+3     Method call         Each element              None                  Boolean                     Yes, used by if
+      (Integer#==)        of subarray,                                                                statement
+                          converted to
+                          String and
+                          then to Int,
+                          with the
+                          element itself
+                          as argument
+
+3     If statement        Return value of           None                  New object (integer          Yes, determines the
+                          Integer#==                                      or array) with each         return value
+                          method call                                     subelement (if array)       of the inner block
+                          (boolean)                                       or the element itself
+                                                                          (if integer) incremented
+                                                                          by one
+
+4     Method call         Each element              None                  New integer (the calling    Yes, determines the
+      (Integer#+)         of subarray                                     integer incremented by 1)   return value of the
+                          (if the array                                                               if statement if the
+                          is only nested                                                              if statement expression
+                          two deep)                                                                   evaluates to true
+
+6     Method call         Each triple-inner         None                  New array with each         Yes, determines the
+      (map)               array                                           element of calling          return value of the if
+                                                                          array incremented by 1      statement if the if
+                                                                                                      statement expression
+                                                                                                      evaluates to false
+                                                                
+6-8   Innermost           Each integer element      None                  New integer with            Yes, used by map for
+      block execution     of triple-inner array                           value of original           transformation
+                                                                          integer element             
+                                                                          incremented by one
+
+7     Method call         Each integer element      None                  New integer with            Yes, determines the
+      (Integer#==)        of triple-inner array                           value of original           return value of the
+                                                                          integer element             innermost block
+                                                                          incremented by one
