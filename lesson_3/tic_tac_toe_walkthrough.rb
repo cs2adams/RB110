@@ -82,25 +82,20 @@ def player_places_piece!(brd)
   brd[square] = PLAYER_MARKER
 end
 
-def computer_places_piece!(brd)
-  winning_move = detect_winning_move(brd, 'Computer')
-  winning_move = detect_winning_move(brd, 'Player') if winning_move.nil?
-
-  square = if winning_move
-             winning_move
-           elsif empty_squares(brd).include?(5)
-             5
-           else
-             empty_squares(brd).sample
-           end
-
+def computer_minimaxes_move!(brd)
+  _, square = minimax(brd)
   brd[square] = COMPUTER_MARKER
+end
+
+def algo_places_piece!(brd, square, player)
+  marker = player == 'Player' ? PLAYER_MARKER : COMPUTER_MARKER
+  brd[square] = marker
 end
 
 def place_piece!(board, current_player)
   case current_player
   when 'Player' then player_places_piece!(board)
-  when 'Computer' then computer_places_piece!(board)
+  when 'Computer' then computer_minimaxes_move!(board)
   end
 end
 
@@ -139,13 +134,60 @@ def detect_winning_move(brd, player = 'Player')
   nil
 end
 
+# rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/AbcSize
+def minimax(brd, player = 'Computer')
+  case detect_winner(brd)
+  when 'Player' then return [-Float::INFINITY, nil]
+  when 'Computer' then return [Float::INFINITY, nil]
+  end
+
+  return [0, nil] if board_full?(brd)
+
+  case player
+  when 'Computer'
+    value = -Float::INFINITY
+    possible_moves = empty_squares(brd)
+    best_move = nil
+
+    possible_moves.each do |move|
+      new_brd = brd.dup
+      algo_places_piece!(new_brd, move, player)
+      new_value, = minimax(new_brd, 'Player')
+
+      if new_value > value
+        best_move = move
+        value = new_value
+      end
+    end
+
+    [value, best_move]
+
+  when 'Player'
+    value = Float::INFINITY
+    possible_moves = empty_squares(brd)
+    best_move = nil
+
+    possible_moves.each do |move|
+      new_brd = brd.dup
+      algo_places_piece!(new_brd, move, player)
+      new_value, = minimax(new_brd, 'Computer')
+
+      if new_value < value
+        best_move = move
+        value = new_value
+      end
+    end
+
+    [value, best_move]
+  end
+end
+# rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/AbcSize
+
 score = initialize_score
 
 loop do
   board = initialize_board
   current_player = choose_first_player
-
-  computer_places_piece!(board) if current_player == 'Computer'
 
   loop do
     display_board(board)
