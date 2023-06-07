@@ -19,8 +19,9 @@ def get_max_algorithm_depth(board_width)
 
   loop do
     num_empty_squares -= 1
-    num_iterations *= num_empty_squares
-    break if num_iterations > MAX_ALGORITHM_ITERATIONS
+    num_iterations *= num_empty_squares unless num_empty_squares == 0
+
+    break if num_iterations > MAX_ALGORITHM_ITERATIONS || num_empty_squares == 0
     current_algo_depth += 1
   end
 
@@ -281,7 +282,6 @@ score = initialize_score
 board_width = set_board_width
 winning_lines = get_winning_lines(board_width)
 max_algo_depth = get_max_algorithm_depth(board_width)
-
 loop do
   board = initialize_board(board_width)
   current_player = choose_first_player
