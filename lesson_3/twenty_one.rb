@@ -159,7 +159,7 @@ def player_turn!(player, deck)
   stay(player)
 end
 
-def scores_equal?(players)
+def tie_game?(players)
   players[0][:hand_value] == players[1][:hand_value]
 end
 
@@ -168,7 +168,7 @@ def determine_winner(players)
     return other_player(players, player) if player[:busted]
   end
 
-  return players if scores_equal?(players)
+  return players if tie_game?(players)
 
   players_sorted = players.sort_by { |player| player[:hand_value] }
   players_sorted[-1]
@@ -220,7 +220,7 @@ loop do
 
   update_score!(winner, players)
 
-  if winner != players && winner[:score] == 5
+  if !tie_game?(players) && winner[:score] == 5
     puts "#{winner[:name]} has won 5 rounds. This ends the game."
     break
   end
