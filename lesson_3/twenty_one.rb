@@ -7,6 +7,8 @@ FACES = [
   { name: 'Jack', value: 10 }, { name: 'Queen', value: 10 },
   { name: 'King', value: 10 }, { name: 'Ace', value: 11 }
 ]
+MAX_SCORE = 21
+DEALER_HIT_THRESHOLD = 17
 
 def initialize_deck
   deck = []
@@ -25,22 +27,33 @@ end
 
 def initialize_players
   player = {
-    name: 'You', hand: [], possessive: 'have', plural: '', busted: false
+    name: 'You', hand: [], hand_value: 0, score: 0,
+    possessive: 'have', plural: '', busted: false
   }
   dealer = {
-    name: 'Dealer', hand: [], possessive: 'has', plural: 's', busted: false
+    name: 'Dealer', hand: [], hand_value: 0, score: 0,
+    possessive: 'has', plural: 's', busted: false
   }
   [player, dealer]
 end
 
-def shuffle!(deck)
-  indices = 0.upto(deck.size - 1).to_a
+def reset(players)
+  players.each { |player| player[:busted] = false }
+end
 
+def shuffle!(deck, players)
+  players.each do |player|
+    hand = player[:hand]
+    hand.size.times { deck << hand.pop }
+  end
+
+  indices = 0.upto(deck.size - 1).to_a
   deck.sort_by! { |_| indices.delete_at(rand(indices.size)) }
 end
 
 def deal!(player, deck, num_cards)
   num_cards.times { player[:hand] << deck.pop }
+  player[:hand_value] = total_hand_value(player)
 end
 
 def total_hand_value(player)
@@ -48,7 +61,7 @@ def total_hand_value(player)
   hand_value = player_cards.inject(0) { |total, card| total + card[:value] }
 
   num_aces = player_cards.count { |card| card[:name] == 'Ace' }
-  num_aces.times { hand_value -= 10 if hand_value > 21 }
+  num_aces.times { hand_value -= 10 if hand_value > MAX_SCORE }
 
   hand_value
 end
@@ -78,24 +91,29 @@ def show(player, num_cards)
   puts card_string
 end
 
-def player_choose_action
-  puts "Would you like to hit or stay? ('hit'/'stay')"
+def prompt_choice(valid_choices)
   player_choice = ''
 
   loop do
     player_choice = gets.chomp
-    unless player_choice == ''
-      break if ['h', 's'].include?(player_choice[0].downcase)
-    end
-    puts "Input not recognized. Please enter 'hit' or 'stay'."
+    break if valid_choice?(player_choice, valid_choices)
+    puts "Input not recognized. Please try again."
   end
 
   player_choice
 end
 
+def valid_choice?(choice, valid_choices)
+  !choice.empty? && valid_choices.include?(choice[0].downcase)
+end
+
+def player_choose_action
+  puts "Would you like to hit or stay? ('hit'/'stay')"
+  prompt_choice(['h', 's'])
+end
+
 def dealer_choose_action(dealer)
-  hand_value = total_hand_value(dealer)
-  hand_value < 17 ? 'h' : 's'
+  dealer[:hand_value] < DEALER_HIT_THRESHOLD ? 'h' : 's'
 end
 
 def choose_action(player)
@@ -114,7 +132,7 @@ def stay(player)
 end
 
 def player_busts?(player)
-  total_hand_value(player) > 21
+  player[:hand_value] > MAX_SCORE
 end
 
 def other_player(players, player)
@@ -132,7 +150,7 @@ def player_turn!(player, deck)
 
   player_choice = choose_action(player)
 
-  if player_choice == 'h'
+  if player_choice[0].downcase == 'h'
     puts "#{player[:name]} choose#{player[:plural]} to hit."
     hit!(player, deck)
     return player_turn!(player, deck)
@@ -141,8 +159,8 @@ def player_turn!(player, deck)
   stay(player)
 end
 
-def scores_equal?(scores)
-  scores[0][:score] == scores[1][:score]
+def scores_equal?(players)
+  players[0][:hand_value] == players[1][:hand_value]
 end
 
 def determine_winner(players)
@@ -150,14 +168,10 @@ def determine_winner(players)
     return other_player(players, player) if player[:busted]
   end
 
-  scores = players.map do |p|
-    { player: p, score: total_hand_value(p) }
-  end
+  return players if scores_equal?(players)
 
-  return players if scores_equal?(scores)
-
-  scores.sort_by! { |score| score[:score] }
-  scores[-1][:player]
+  players_sorted = players.sort_by { |player| player[:hand_value] }
+  players_sorted[-1]
 end
 
 def display_winner(winner, players)
@@ -170,25 +184,48 @@ def display_winner(winner, players)
     puts "#{winner[:name]} win#{winner[:plural]}"
   else
     puts "#{winner[:name]} win#{winner[:plural]} " \
-    "with #{total_hand_value(winner)}."
+    "with #{winner[:hand_value]}."
   end
 end
 
-system('clear')
+def update_score!(winner, players)
+  return if winner == players
+  winner[:score] += 1
+end
+
+def play_again?
+  puts 'Would you like to play again? (y/n)'
+  prompt_choice(['y', 'n'])[0].downcase == 'y'
+end
 
 player, dealer = initialize_players
 players = [player, dealer]
-
 deck = initialize_deck
-shuffle!(deck)
 
-players.each { |current_player| deal!(current_player, deck, 2) }
-show(dealer, 1)
+loop do
+  system('clear')
+  reset(players)
+  shuffle!(deck, players)
 
-players.each do |current_player|
-  player_turn!(current_player, deck)
-  break if current_player[:busted]
+  players.each { |current_player| deal!(current_player, deck, 2) }
+  show(dealer, 1)
+
+  players.each do |current_player|
+    player_turn!(current_player, deck)
+    break if current_player[:busted]
+  end
+
+  winner = determine_winner(players)
+  display_winner(winner, players)
+
+  update_score!(winner, players)
+
+  if winner != players && winner[:score] == 5
+    puts "#{winner[:name]} has won 5 rounds. This ends the game."
+    break
+  end
+
+  break unless play_again?
 end
 
-winner = determine_winner(players)
-display_winner(winner, players)
+puts 'Thank you for playing. Goodbye!'
