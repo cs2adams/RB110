@@ -130,10 +130,6 @@ def player_busts?(player)
   total_hand_value(player) > 21
 end
 
-def nobody_busted?(players)
-  players.none? { |p| p[:busted] }
-end
-
 def other_player(players, player)
   players.select { |p| p != player }[0]
 end
@@ -163,6 +159,10 @@ def scores_equal(scores)
 end
 
 def determine_winner(players)
+  players.each do |player|
+    return other_player(players, player) if player[:busted]
+  end
+
   scores = players.map do |p|
     { player: p, score: total_hand_value(p) }
   end
@@ -173,33 +173,35 @@ def determine_winner(players)
   scores[-1][:player]
 end
 
+def display_winner(winner, players)
+  if winner == players
+    return puts "It's a tie!"
+  end
+
+  loser = other_player(players, winner)
+  if loser[:busted]
+    puts "#{winner[:name]} win#{winner[:plural]}"
+  else
+    puts "#{winner[:name]} win#{winner[:plural]} " \
+    "with #{total_hand_value(winner)}."
+  end
+end
+
 system('clear')
-deck = initialize_deck
-shuffle!(deck)
 
 player, dealer = initialize_players
 players = [player, dealer]
 
-players.each { |current_player| deal!(current_player, deck, 2) }
+deck = initialize_deck
+shuffle!(deck)
 
+players.each { |current_player| deal!(current_player, deck, 2) }
 show(dealer, 1)
 
 players.each do |current_player|
   player_turn!(current_player, deck)
-  if current_player[:busted]
-    other_player = other_player(players, current_player)
-    puts "#{other_player[:name]} win#{other_player[:plural]}"
-    break
-  end
+  break if current_player[:busted]
 end
 
-if nobody_busted?(players)
-  winner = determine_winner(players)
-
-  if winner == players
-    puts "It's a tie!"
-  else
-    puts "#{winner[:name]} win#{winner[:plural]} " \
-      "with #{total_hand_value(winner)}."
-  end
-end
+winner = determine_winner(players)
+display_winner(winner, players)
