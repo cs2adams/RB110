@@ -1,14 +1,7 @@
 # twenty_one.rb
-
-# Deck: An array of hashes
-# Card: A hash with keys: name, value, suit
-# for ace: value = 1
-#   separate ace_vlaue mehtod to add 10 if needed
-
-# shufle with sort_by
-
 require 'pry'
 require 'pry-byebug'
+
 SUITS = ['Spades', 'Clubs', 'Hearts', 'Diamonds']
 FACES = [
   { name: 'Jack', value: 10 }, { name: 'Queen', value: 10 },
@@ -38,12 +31,6 @@ def initialize_players
     name: 'Dealer', hand: [], possessive: 'has', plural: 's', busted: false
   }
   [player, dealer]
-end
-
-def print_deck(deck)
-  deck.each do |card|
-    puts card[:name] + ' of ' + card[:suit]
-  end
 end
 
 def shuffle!(deck)
@@ -154,7 +141,7 @@ def player_turn!(player, deck)
   stay(player)
 end
 
-def scores_equal(scores)
+def scores_equal?(scores)
   scores[0][:score] == scores[1][:score]
 end
 
@@ -167,7 +154,7 @@ def determine_winner(players)
     { player: p, score: total_hand_value(p) }
   end
 
-  return players if scores_equal(scores)
+  return players if scores_equal?(scores)
 
   scores.sort_by! { |score| score[:score] }
   scores[-1][:player]
